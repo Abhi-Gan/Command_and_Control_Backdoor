@@ -75,7 +75,15 @@ def receive_msg(connection, buffer_size=1024):
 
 def run_shell_script(script_fname):
     try: 
-        result = subprocess.run(["bash", script_fname], capture_output=True, text=True)
+        # result = subprocess.run(["bash", script_fname], capture_output=True, text=True)
+        # return result.stdout + result.stderr
+        # For Python 3.6 compatibility
+        result = subprocess.run(
+            ["bash", script_fname],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True  # This is equivalent to text=True
+        )
         return result.stdout + result.stderr
     except Exception as e:
         return str(e)
