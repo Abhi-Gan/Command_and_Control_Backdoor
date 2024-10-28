@@ -98,8 +98,8 @@ def execute_msg(message):
     # TODO: complete so runs the code
     print(f"received:\n{message}\n==")
     # create shell script from the message
-    script_fname = "run_on_target.sh"
-    with open(convert_path(script_fname), "w") as f:
+    script_fname = convert_path("run_on_target.sh")
+    with open(script_fname, "w") as f:
         f.write(message)
     # run the shell script
     run_output = run_shell_script(script_fname)
