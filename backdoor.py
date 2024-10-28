@@ -10,7 +10,7 @@ import json
 # read in config vars
 
 def convert_path(file_name):
-    script_dir = os.path.dirname(os.path.abspath(file_name))
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, file_name)
     return file_path
 
