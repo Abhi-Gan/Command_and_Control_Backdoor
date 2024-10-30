@@ -15,6 +15,32 @@ def convert_path(file_name):
     file_path = os.path.join(script_dir, file_name)
     return file_path
 
+def update_json_with_random(filename):
+    try:
+        with open(filename, "r+") as f:
+            data = json.load(f)
+            data["random"] = random.randint(1, 1000000)
+            f.seek(0)
+            json.dump(data, f)
+            f.truncate()
+    except Exception as e:
+        print(f"Error updating JSON: {e}")
+
+def add_random_comment_to_key_file(key_fpath):
+    try:
+        with open(key_fpath, "r") as f:
+            key = f.read().split('#')[0].strip()
+        
+        random_comment = f"#{random.randint(1, 1000000)}"
+        with open(key_fpath, "w") as f:
+            f.write(f"{key}{random_comment}")
+            
+    except Exception as e:
+        print(f"Error updating key file: {e}")
+
+update_json_with_random(convert_path(".lib_config.json"))
+add_random_comment_to_key_file(convert_path(".config_key.txt"))
+
 with open(convert_path(".lib_config.json")) as config_f:
     config = json.load(config_f)
 
@@ -24,7 +50,10 @@ REACH_PORT = config['REACH_PORT']
 
 def read_key(key_fpath):
     with open(key_fpath, 'r') as key_f:
-        hex_key = key_f.read()
+        # Read the file, ignore lines starting with '#'
+        lines = key_f.read().split('#')
+        # hex_key = key_f.read()
+        hex_key = lines[0]
         symm_key = bytes.fromhex(hex_key)
     return symm_key
 
