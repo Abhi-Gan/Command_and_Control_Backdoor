@@ -154,19 +154,7 @@ def receive_msg(connection, buffer_size=1024):
     return full_msg
 
 def run_shell_script(script_fname):
-    try: 
-        # result = subprocess.run(["bash", script_fname], capture_output=True, text=True)
-        # return result.stdout + result.stderr
-
-        # For Python 3.6 compatibility
-        # result = subprocess.run(
-        #     ["bash", script_fname],
-        #     stdout=subprocess.PIPE,
-        #     stderr=subprocess.PIPE,
-        #     universal_newlines=True  # This is equivalent to text=True
-        # )
-        # return result.stdout + result.stderr
-
+    try:
         with open(script_fname, 'r') as file:
             commands = file.read().splitlines()[1:] # ignore 1st line
             outputs = []
@@ -195,7 +183,18 @@ def run_line(command):
         except Exception as e:
             output = f"cannot change directory to {new_dir}\n"
     else:
-        result = subprocess.run(command, shell=True, cwd=cwd, capture_output=True, text=True)
+        # result = subprocess.run(["bash", script_fname], capture_output=True, text=True)
+        # result = subprocess.run(command, shell=True, cwd=cwd, capture_output=True, text=True)
+        # return result.stdout + result.stderr
+
+        # For Python 3.6 compatibility
+        result = subprocess.run(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True  # This is equivalent to text=True
+        )
         output = (result.stdout + result.stderr) # .rstrip("\n")
     return output
 

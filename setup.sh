@@ -1,7 +1,7 @@
-# RandomID: 649746
+# RandomID: 689548
 # test commands that are run
 pwd
-cd Command_and_Control
+cd ..
 pwd
 ls -l
 echo "2"
